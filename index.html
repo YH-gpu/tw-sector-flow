@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>台股族群資金流向</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F1F3F4;--panel:#FFFFFF;--ink:#1A222C;--muted:#5E6974;--rule:#D3D9DE;--up:#C2312F;--down:#1C7A50;--accent:#34489A;--up-rgb:194,49,47;--down-rgb:28,122,80;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#101418;--panel:#171C21;--ink:#E4E8EC;--muted:#8E99A4;--rule:#27303A;--up:#EE6A61;--down:#44B884;--accent:#9AABEF;--up-rgb:238,106,97;--down-rgb:68,184,132}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;font-variant-numeric:tabular-nums;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+main{max-width:880px;margin:0 auto;padding:24px 20px 64px}
+a{color:var(--accent)}
+a:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--rule)}
+.brand{font-weight:500}
+.top label{color:var(--muted);font-size:.9rem;display:flex;gap:8px;align-items:center}
+select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:4px 8px}
+.hero{padding:36px 0 8px}
+.hero .date{color:var(--muted);margin:0 0 6px}
+.hero h1{font-size:clamp(1.5rem,4.2vw,2.2rem);line-height:1.4;font-weight:700;margin:0 0 12px;max-width:24em}
+.stats{color:var(--muted);margin:0;max-width:40em}
+section{margin-top:44px}
+h2{font-size:1.15rem;font-weight:700;margin:0 0 4px}
+.hint{color:var(--muted);font-size:.9rem;margin:0 0 16px;max-width:40em}
+.flow-head,.row{display:grid;grid-template-columns:7.5em 1fr 4.6em 5em;gap:12px;align-items:center}
+.flow-head{font-size:.8rem;color:var(--muted);padding-bottom:6px;border-bottom:1px solid var(--rule)}
+.flow-head span:nth-child(n+3){text-align:right}
+.row{padding:7px 0;border-bottom:1px solid var(--rule)}
+.name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track{position:relative;height:12px}
+.track::before{content:"";position:absolute;left:50%;top:-5px;bottom:-5px;width:1px;background:var(--muted);opacity:.45}
+.fill{position:absolute;top:0;height:100%;border-radius:2px}
+.fill.in{left:50%;background:var(--up)}
+.fill.out{right:50%;background:var(--down)}
+.ratio,.chg{text-align:right;font-size:.92rem}
+.ratio.na{color:var(--muted)}
+.up{color:var(--up)}
+.down{color:var(--down)}
+.theme,.others{padding:18px 0;border-bottom:1px solid var(--rule)}
+.theme h3,.others h3{font-size:1.05rem;margin:0 0 6px;font-weight:700;display:flex;gap:10px;align-items:baseline}
+.n{font-size:.85rem;color:var(--muted);font-weight:400}
+.summary{margin:0 0 10px;padding-left:12px;border-left:3px solid var(--accent)}
+.theme ul{list-style:none;margin:0;padding:0}
+.theme li{padding:5px 0}
+.line{display:flex;gap:10px;align-items:baseline}
+.code{color:var(--muted);font-size:.9rem;min-width:3.2em}
+.sname{font-weight:500}
+.pct{margin-left:auto}
+.reason{margin:2px 0 0 calc(3.2em + 10px);color:var(--muted);font-size:.92rem}
+.others p{margin:0}
+.chip{display:inline-block;margin:0 16px 6px 0}
+.note{color:var(--muted);font-size:.92rem;max-width:40em}
+.scroll{overflow-x:auto}
+table{border-collapse:separate;border-spacing:2px;font-size:.78rem}
+th{font-weight:400;color:var(--muted);white-space:nowrap;padding:2px 6px}
+th[scope=row]{text-align:left;color:var(--ink);padding-left:0;font-size:.85rem}
+td{width:26px;min-width:26px;height:22px;border-radius:3px}
+td.na{background:var(--rule);opacity:.45}
+footer{margin-top:48px;color:var(--muted);font-size:.85rem}
+@media (max-width:560px){
+  .flow-head,.row{grid-template-columns:5.6em 1fr 4em 4.6em;gap:8px;font-size:.9rem}
+  .reason{margin-left:0}
+}
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <span class="brand">台股族群資金流向</span>
+    <label for="date">日期 <select id="date"></select></label>
+  </header>
+
+  <section class="hero" aria-live="polite">
+    <p class="date" id="hero-date"></p>
+    <h1 id="headline">載入中…</h1>
+    <p class="stats" id="stats"></p>
+  </section>
+
+  <div id="content">
+    <section>
+      <h2>產業成交比重，跟前 20 個交易日平均比</h2>
+      <p class="hint">長條往右（紅）代表今天資金比平常更集中在這個產業，往左（綠）代表資金在退出。右邊兩欄是倍數和成交金額加權的漲跌幅。</p>
+      <div class="flow-head"><span>產業</span><span></span><span>倍數</span><span>加權漲跌</span></div>
+      <div id="flow"></div>
+    </section>
+
+    <section>
+      <h2>強勢股題材</h2>
+      <p class="hint">漲幅 8% 以上的個股，依新聞判讀上漲原因並歸類到題材族群。</p>
+      <div id="themes"></div>
+    </section>
+
+    <section>
+      <h2>近 20 個交易日的輪動</h2>
+      <p class="hint" id="heat-hint">每一格是該產業當天的成交比重倍數。越紅代表資金越集中，越綠代表越冷清。滑過格子可以看數字。</p>
+      <div class="scroll"><table id="heat"></table></div>
+    </section>
+  </div>
+
+  <footer>
+    <p id="updated"></p>
+    <p>資料來源：臺灣證券交易所、證券櫃檯買賣中心。題材判讀由 Claude 根據近 2 日新聞產生，僅供研究參考。</p>
+  </footer>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct = v => (v > 0 ? '+' : '') + Number(v).toFixed(2) + '%';
+const cls = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
+const yi = v => Math.round(v / 1e8).toLocaleString('zh-TW');
+const safeUrl = u => /^https?:\/\//.test(u || '') ? u : null;
+
+async function getJSON(path) {
+  const r = await fetch(`${path}?v=${Date.now()}`);
+  if (!r.ok) throw new Error(`${path} ${r.status}`);
+  return r.json();
+}
+const marketCache = new Map();
+function loadMarket(d) {
+  if (!marketCache.has(d)) marketCache.set(d, getJSON(`data/market/${d}.json`));
+  return marketCache.get(d);
+}
+let DATES = [];
+
+async function init() {
+  try { DATES = (await getJSON('data/index.json')).dates || []; } catch (e) { DATES = []; }
+  if (!DATES.length) return showEmpty();
+  const sel = $('#date');
+  sel.innerHTML = DATES.map(d => `<option value="${d}">${d}</option>`).join('');
+  sel.addEventListener('change', () => render(sel.value));
+  render(DATES[0]);
+}
+
+function showEmpty() {
+  $('#content').hidden = true;
+  $('#headline').textContent = '還沒有任何資料';
+  $('#stats').textContent = '到 GitHub repo 的 Actions 分頁，選 fetch-market，按 Run workflow 手動執行一次。要在交易日收盤後執行，才會產生第一份資料。';
+}
+
+async function render(d) {
+  try {
+    const [m, a] = await Promise.all([
+      loadMarket(d),
+      getJSON(`data/analysis/${d}.json`).catch(() => null),
+    ]);
+    renderHero(m, a);
+    renderFlow(m);
+    renderThemes(m, a);
+    renderHeat(d, m);
+    $('#updated').textContent = `行情更新於 ${m.generated_at.replace('T', ' ').slice(0, 16)}`
+      + (m.sources && m.sources.tpex ? '' : '。今天缺上櫃資料，統計只含上市股票。');
+  } catch (e) {
+    $('#headline').textContent = `讀不到 ${d} 的資料`;
+    $('#stats').textContent = `檔案 data/market/${d}.json 可能不存在或格式有誤（${e.message}）。`;
+  }
+}
+
+function renderHero(m, a) {
+  const [y, mo, da] = m.date.split('-');
+  $('#hero-date').textContent = `${y} 年 ${+mo} 月 ${+da} 日`;
+  let h = a && a.headline;
+  if (!h) {
+    const top = m.industries
+      .filter(i => i.share_ratio && i.share >= 0.005)
+      .sort((x, z) => z.share_ratio - x.share_ratio)[0];
+    h = top
+      ? `今天成交比重放大最多的是${top.name}，是前 ${m.history_days} 日平均的 ${top.share_ratio.toFixed(2)} 倍`
+      : '資料累積中，下一個交易日起就能比較成交比重的變化';
+  }
+  $('#headline').textContent = h;
+  const k = m.market;
+  $('#stats').textContent = `全市場成交 ${yi(k.total_value)} 億元，上漲 ${k.up} 家、下跌 ${k.down} 家，漲幅 8% 以上 ${k.strong} 檔。`;
+}
+
+function renderFlow(m) {
+  const rows = m.industries.filter(i => i.share >= 0.003)
+    .sort((x, z) => (z.share_ratio ?? -1) - (x.share_ratio ?? -1));
+  $('#flow').innerHTML = rows.map(i => {
+    const r = i.share_ratio;
+    const w = r == null ? 0 : Math.min(Math.abs(r - 1), 1) * 50;
+    const bar = r == null ? '' : `<span class="fill ${r >= 1 ? 'in' : 'out'}" style="width:${w}%"></span>`;
+    return `<div class="row" title="成交 ${yi(i.value)} 億元，占全市場 ${(i.share * 100).toFixed(1)}%，上漲 ${i.up} 家、下跌 ${i.down} 家">
+      <span class="name">${esc(i.name)}</span>
+      <span class="track">${bar}</span>
+      <span class="ratio ${r == null ? 'na' : ''}">${r == null ? '累積中' : r.toFixed(2) + ' 倍'}</span>
+      <span class="chg ${cls(i.wavg_pct)}">${pct(i.wavg_pct)}</span>
+    </div>`;
+  }).join('');
+}
+
+function stockLine(s) {
+  return `<div class="line"><span class="code">${esc(s.code)}</span><span class="sname">${esc(s.name)}</span><span class="pct ${cls(s.pct)}">${pct(s.pct)}</span></div>`;
+}
+
+function renderThemes(m, a) {
+  const box = $('#themes');
+  if (a && Array.isArray(a.themes)) {
+    const others = a.others || [];
+    const sugg = a.new_theme_suggestions || [];
+    let html = '';
+    if (!a.themes.length && !others.length) html += '<p class="note">今天沒有漲幅超過 8% 的個股。</p>';
+    html += a.themes.map(t => `<article class="theme">
+      <h3>${esc(t.name)}<span class="n">${(t.stocks || []).length} 檔</span></h3>
+      ${t.summary ? `<p class="summary">${esc(t.summary)}</p>` : ''}
+      <ul>${(t.stocks || []).map(s => {
+        const u = safeUrl(s.url);
+        const src = [s.source, s.source_date].filter(Boolean).map(esc).join(' ');
+        const srcHtml = src ? ` <span class="src">${u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${src}</a>` : src}</span>` : '';
+        return `<li>${stockLine(s)}<p class="reason">${esc(s.reason)}${srcHtml}</p></li>`;
+      }).join('')}</ul>
+    </article>`).join('');
+    if (others.length) {
+      html += `<div class="others"><h3>其他<span class="n">${others.length} 檔</span></h3><p>${others.map(s =>
+        `<span class="chip">${esc(s.code)} ${esc(s.name)} <span class="${cls(s.pct)}">${pct(s.pct)}</span></span>`).join('')}</p></div>`;
+    }
+    if (sugg.length) {
+      html += `<p class="note">Claude 建議新增族群：${sugg.map(s => `${esc(s.name)}（${(s.codes || []).map(esc).join('、')}）`).join('；')}。要採用的話，把名稱加進 config/sectors.json。</p>`;
+    }
+    box.innerHTML = html;
+    return;
+  }
+  const groups = {};
+  m.strong.forEach(s => (groups[s.industry] = groups[s.industry] || []).push(s));
+  const list = Object.entries(groups).sort((x, z) => z[1].length - x[1].length);
+  box.innerHTML = '<p class="note">今天的題材判讀還沒完成，通常在 18:30 後更新。下面先依官方產業別列出漲幅 8% 以上的個股。</p>'
+    + (list.length
+      ? list.map(([name, ss]) => `<article class="theme"><h3>${esc(name)}<span class="n">${ss.length} 檔</span></h3><ul>${ss.map(s => `<li>${stockLine(s)}</li>`).join('')}</ul></article>`).join('')
+      : '<p class="note">今天沒有漲幅超過 8% 的個股。</p>');
+}
+
+async function renderHeat(d, m) {
+  const i = DATES.indexOf(d);
+  const ds = DATES.slice(i, i + 20).reverse();
+  const ms = await Promise.all(ds.map(x => loadMarket(x).catch(() => null)));
+  const names = m.industries.slice(0, 14).map(x => x.name);
+  const head = `<tr><th scope="col">產業</th>${ds.map(x => `<th scope="col">${+x.slice(5, 7)}/${+x.slice(8)}</th>`).join('')}</tr>`;
+  const body = names.map(n => `<tr><th scope="row">${esc(n)}</th>${ms.map((mm, k) => {
+    const it = mm && mm.industries.find(x => x.name === n);
+    const r = it && it.share_ratio;
+    if (r == null) return `<td class="na" title="${ds[k]}：還沒有比較基準"></td>`;
+    const alpha = (Math.min(Math.abs(r - 1) / 0.6, 1) * 0.85 + 0.08).toFixed(2);
+    const rgb = r >= 1 ? 'var(--up-rgb)' : 'var(--down-rgb)';
+    return `<td style="background:rgba(${rgb},${alpha})" title="${ds[k]} ${esc(n)}：${r.toFixed(2)} 倍"></td>`;
+  }).join('')}</tr>`).join('');
+  $('#heat').innerHTML = `<thead>${head}</thead><tbody>${body}</tbody>`;
+  if (ds.length < 5) $('#heat-hint').textContent = '資料累積幾個交易日之後，這裡才看得出族群輪動。';
+}
+
+init();
+</script>
+</body>
+</html>
