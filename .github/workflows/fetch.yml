@@ -1,0 +1,40 @@
+name: fetch-market
+
+on:
+  schedule:
+    - cron: "0 10 * * 1-5"   # UTC 10:00 = 台北 18:00，週一到週五
+  workflow_dispatch:          # 允許在 Actions 頁面手動執行
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data-commit
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install requests
+
+      - run: python scripts/fetch_market.py
+
+      - name: Commit data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "沒有新資料（休市或已存在）"
+            exit 0
+          fi
+          git commit -m "data: market $(TZ=Asia/Taipei date +%F)"
+          git pull --rebase origin main
+          git push origin main
